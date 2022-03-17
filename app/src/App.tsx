@@ -1,5 +1,15 @@
 import { LoadingButton } from '@mui/lab'
-import { Box, CircularProgress, Paper, Stack, TextField } from '@mui/material'
+import {
+  Box,
+  CircularProgress,
+  FormControl,
+  FormControlLabel, FormLabel, InputAdornment,
+  Paper,
+  Radio,
+  RadioGroup,
+  Stack,
+  TextField
+} from '@mui/material'
 import CssBaseline from '@mui/material/CssBaseline'
 import Grid from '@mui/material/Grid'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
@@ -17,6 +27,9 @@ function App() {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
+  const [feeStructure, setFeeStructure] = useState('');
+  const [feeAmount, setFeeAmount] = useState('');
+
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
@@ -26,6 +39,7 @@ function App() {
       console.log(data);
       setJobs(data);
       setLoading(false);
+
     }
 
     getJobs();
@@ -34,10 +48,15 @@ function App() {
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (jobTitle === '' || jobDescription === '') return;
     console.log(`Creating job - ${jobTitle} - ${jobDescription}`);
-    const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription});
+    const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription, feeStructure: feeStructure, feeAmount: feeAmount});
     console.log(data);
     setChanged(!changed);
+    setJobTitle("");
+    setJobDescription("");
+    setFeeAmount("");
+    setFeeStructure("");
   }
   return (
     <ThemeProvider theme={theme}>
@@ -65,21 +84,53 @@ function App() {
                   label="Title"
                   name="title"
                   autoFocus
+                  value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                 />
                 <TextField
                   margin="normal"
                   required
                   fullWidth
+                  multiline
+                  minRows={3}
                   id="description"
                   label="Description"
                   name="description"
+                  value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                 />
+                <FormControl>
+                  <FormLabel>Fee Structure</FormLabel>
+                  <RadioGroup name="fee-structure" row value={feeStructure} onChange={(e) => setFeeStructure(e.target.value)}>
+                    <FormControlLabel value="No-Win-No-Fee" control={<Radio/>} label="No-Win-No-Fee"/>
+                    <FormControlLabel value="Fixed-Fee" control={<Radio/>} label="Fixed-Fee"/>
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  margin='normal'
+                  required
+                  fullWidth
+                  id='fee-amount'
+                  label={feeStructure === "No-Win-No-Fee" ? "Fee Percentage" : "Fee Amount"}
+                  InputProps={feeStructure === "No-Win-No-Fee" ? {
+                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                  } : {
+                    startAdornment: <InputAdornment position="start">£</InputAdornment>,
+                  }}
+                  name='fee-amount'
+                  value={feeAmount}
+                  onChange={event => setFeeAmount(event.target.value)}
+                  />
                 <LoadingButton
                   type="submit"
                   fullWidth
                   variant="contained"
+                  disabled={
+                    jobTitle === '' ||
+                    jobDescription === '' ||
+                    feeStructure === '' ||
+                    feeAmount === ''
+                  }
                 >
                   Create Job
                 </LoadingButton>

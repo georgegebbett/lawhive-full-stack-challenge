@@ -13,6 +13,12 @@ export class Job {
 
   @Prop()
   state: 'started' | 'paid';
+
+  @Prop()
+  feeStructure: 'No-Win-No-Fee' | 'Fixed-Fee';
+
+  @Prop()
+  feeAmount: number;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

@@ -12,7 +12,7 @@ export class Job {
   description: string;
 
   @Prop()
-  state: 'started';
+  state: 'started' | 'paid';
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

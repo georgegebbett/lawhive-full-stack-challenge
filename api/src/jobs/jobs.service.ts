@@ -10,7 +10,7 @@ export class JobsService {
   constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) {}
 
   async create(createJobDto: CreateJobDto): Promise<Job> {
-    const createdJob = new this.jobModel(createJobDto);
+    const createdJob = new this.jobModel({ ...createJobDto, state: 'started' });
     return createdJob.save();
   }
 

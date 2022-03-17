@@ -103,6 +103,7 @@ function App() {
               alignItems: 'center',
             }}
           >
+            <h1>Available jobs</h1>
             {loading?
               <CircularProgress/> :
               <JobTable jobs={jobs}/>

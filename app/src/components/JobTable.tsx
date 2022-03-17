@@ -12,6 +12,7 @@ function JobTable({jobs}: Props) {
         <TableRow>
           <TableCell>Title</TableCell>
           <TableCell>Description</TableCell>
+          <TableCell>Status</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -19,6 +20,7 @@ function JobTable({jobs}: Props) {
           <TableRow key={job._id}>
             <TableCell>{job.title}</TableCell>
             <TableCell>{job.description}</TableCell>
+            <TableCell>{job.state}</TableCell>
           </TableRow>
         ))}
       </TableBody>

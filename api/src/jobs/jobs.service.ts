@@ -18,8 +18,8 @@ export class JobsService {
     return this.jobModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} job`;
+  findOne(id: string) {
+    return this.jobModel.findById(id).exec();
   }
 
   update(id: number, updateJobDto: UpdateJobDto) {
@@ -28,5 +28,9 @@ export class JobsService {
 
   remove(id: number) {
     return `This action removes a #${id} job`;
+  }
+
+  markPaid(id: string, paymentAmount: number) {
+    return this.jobModel.findByIdAndUpdate(id, { state: 'paid', paymentAmount: paymentAmount });
   }
 }

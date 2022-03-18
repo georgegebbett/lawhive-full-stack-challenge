@@ -19,6 +19,9 @@ export class Job {
 
   @Prop()
   feeAmount: number;
+
+  @Prop()
+  paymentAmount: number;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

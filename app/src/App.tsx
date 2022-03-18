@@ -157,7 +157,7 @@ function App() {
             <h1>Available jobs</h1>
             {loading?
               <CircularProgress/> :
-              <JobTable jobs={jobs}/>
+              <JobTable jobs={jobs} refreshTable={() => setChanged(!changed)}/>
             }
           </Box>
         </Grid>

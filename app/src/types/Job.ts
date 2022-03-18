@@ -4,5 +4,6 @@ export type Job = {
   state: 'started' | 'paid',
   feeStructure: 'No-Win-No-Fee' | 'Fixed-Fee',
   feeAmount: number,
+  paymentAmount: number,
   _id: string
 }

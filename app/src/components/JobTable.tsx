@@ -1,11 +1,33 @@
 import {Job} from '../types/Job';
-import {Chip, Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
+import {Button, Chip, Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
+import axios from "axios";
 
 interface Props {
-  jobs: Job[]
+  jobs: Job[],
+  refreshTable: () => void
 }
 
-function JobTable({jobs}: Props) {
+const markJobPaid = (job: Job, refreshTable: () => void) => {
+
+  const getSettlementAmount = () => {
+    while (true){
+      const settlementAmount = prompt("Enter Settlement amount");
+      if (settlementAmount !== null && parseFloat(settlementAmount)) return settlementAmount;
+    }
+  }
+
+  let paymentAmount;
+  if (job.feeStructure === "No-Win-No-Fee") {
+    const settlementAmount = getSettlementAmount();
+    paymentAmount = (job.feeAmount / 100) * parseFloat(settlementAmount);
+  } else {
+    paymentAmount = job.feeAmount;
+  }
+  axios.post(`http://localhost:4000/jobs/${job._id}/pay`, {paymentAmount: paymentAmount})
+    .then(() => refreshTable());
+}
+
+function JobTable({jobs, refreshTable}: Props) {
   return (
     <Table>
       <TableHead>
@@ -15,6 +37,7 @@ function JobTable({jobs}: Props) {
           <TableCell>Fee Structure</TableCell>
           <TableCell>Fee Amount/Percentage</TableCell>
           <TableCell>Status</TableCell>
+          <TableCell>Pay</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -25,7 +48,19 @@ function JobTable({jobs}: Props) {
             <TableCell>{job.feeStructure}</TableCell>
             <TableCell>{`${job.feeStructure === "Fixed-Fee" ? "£" : ""}${job.feeAmount}${job.feeStructure === "No-Win-No-Fee" ? "%" : ""}`}</TableCell>
             <TableCell>
-              <Chip label={job.state}/>
+              <Chip color={job.state === "paid" ? "success" : "default"} label={job.state}/>
+            </TableCell>
+            <TableCell>
+              {
+                job.state === 'started' ?
+                (<Button
+                  variant="contained"
+                  disabled={job.state !== 'started'}
+                  onClick={() => markJobPaid(job, refreshTable)}
+                >Pay</Button>)
+                  :
+                (`£${job.paymentAmount}`)
+              }
             </TableCell>
           </TableRow>
         ))}

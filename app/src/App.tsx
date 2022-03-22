@@ -1,19 +1,20 @@
 import { LoadingButton } from '@mui/lab'
 import {
+  Alert, AlertTitle,
   Box,
   CircularProgress,
   FormControl,
   FormControlLabel, FormLabel, InputAdornment,
   Paper,
   Radio,
-  RadioGroup,
+  RadioGroup, Snackbar,
   Stack,
   TextField
 } from '@mui/material'
 import CssBaseline from '@mui/material/CssBaseline'
 import Grid from '@mui/material/Grid'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
-import React, {FormEvent, FormEventHandler, useEffect, useState} from 'react'
+import React, {FormEvent, useEffect, useState} from 'react'
 import './App.css'
 import JobTable from "./components/JobTable";
 import axios from "axios";
@@ -24,14 +25,21 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [changed, setChanged] = useState(false);
 
+  const [jobSource, setJobSource] = useState("text");
+
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [jobUrl, setJobUrl] = useState('');
 
   const [feeStructure, setFeeStructure] = useState('');
   const [feeAmount, setFeeAmount] = useState('');
   const [expectedSettlement, setExpectedSettlement] = useState('');
 
+  const [creationErrorOpen, setCreationErrorOpen] = useState(false);
+  const [creationErrorMessage, setCreationErrorMessage] = useState('');
+
   const [jobs, setJobs] = useState([]);
+
 
   useEffect(() => {
 
@@ -47,19 +55,35 @@ function App() {
 
   }, [changed])
 
+  const displayCreationError = (errorMessage: string) => {
+    setCreationErrorMessage(errorMessage);
+    setCreationErrorOpen(true);
+    setTimeout(() => setCreationErrorOpen(false), 2500);
+  }
+
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (jobTitle === '' || jobDescription === '') return;
+    if (jobTitle === '') return;
+    if (jobSource === 'text' && jobDescription === '') return;
+    if (jobSource === 'url' && jobUrl === '') return;
     if (feeStructure === "Fixed-Fee") setExpectedSettlement('');
+    if (jobSource === 'url') setJobDescription('');
+    if (jobSource === 'text') setJobUrl('');
     console.log(`Creating job - ${jobTitle} - ${jobDescription}`);
-    const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription, feeStructure: feeStructure, feeAmount: feeAmount, expectedSettlement: expectedSettlement});
-    console.log(data);
-    setChanged(!changed);
-    setJobTitle("");
-    setJobDescription("");
-    setFeeAmount("");
-    setFeeStructure("");
-    setExpectedSettlement('');
+    try {
+      const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription, url: jobUrl, feeStructure: feeStructure, feeAmount: feeAmount, expectedSettlement: expectedSettlement});
+      console.log(data);
+      setChanged(!changed);
+      setJobTitle("");
+      setJobDescription("");
+      setFeeAmount("");
+      setFeeStructure("");
+      setExpectedSettlement('');
+      setJobUrl('');
+    } catch (error: any) {
+      console.log(error.response.data.message);
+      displayCreationError(error.response.data.message);
+    }
   }
   return (
     <ThemeProvider theme={theme}>
@@ -90,7 +114,14 @@ function App() {
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                 />
-                <TextField
+                <FormControl>
+                  <FormLabel>Create description from:</FormLabel>
+                  <RadioGroup name="job-source" row value={jobSource} onChange={(e) => setJobSource(e.target.value)}>
+                    <FormControlLabel value="text" control={<Radio/>} label="Text"/>
+                    <FormControlLabel value="url" control={<Radio/>} label="URL"/>
+                  </RadioGroup>
+                </FormControl>
+                {jobSource === 'text' ? <TextField
                   margin="normal"
                   required
                   fullWidth
@@ -101,7 +132,16 @@ function App() {
                   name="description"
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                />
+                /> : <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="jobUrl"
+                  label="URL"
+                  name="jobUrl"
+                  value={jobUrl}
+                  onChange={(e) => setJobUrl(e.target.value)}
+                />}
                 <FormControl>
                   <FormLabel>Fee Structure</FormLabel>
                   <RadioGroup name="fee-structure" row value={feeStructure} onChange={(e) => setFeeStructure(e.target.value)}>
@@ -141,13 +181,19 @@ function App() {
                   variant="contained"
                   disabled={
                     jobTitle === '' ||
-                    jobDescription === '' ||
+                    (jobDescription === '' && jobUrl === '') ||
                     feeStructure === '' ||
                     feeAmount === ''
                   }
                 >
                   Create Job
                 </LoadingButton>
+                <Snackbar open={creationErrorOpen} anchorOrigin={{horizontal: "right", vertical: 'bottom'}}>
+                  <Alert severity="error" variant='filled'>
+                    <AlertTitle>Job Creation Failed</AlertTitle>
+                    {creationErrorMessage}
+                  </Alert>
+                </Snackbar>
               </Stack>
             </Box>
           </Box>

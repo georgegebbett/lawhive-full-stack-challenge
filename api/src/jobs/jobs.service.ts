@@ -4,13 +4,22 @@ import { UpdateJobDto } from './dto/update-job.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Job, JobDocument } from './job.schema';
 import { Model } from 'mongoose';
+import { getDescriptionFromUrl } from './jobScraper';
 
 @Injectable()
 export class JobsService {
   constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) {}
 
   async create(createJobDto: CreateJobDto): Promise<Job> {
-    const createdJob = new this.jobModel({ ...createJobDto, state: 'started' });
+    if (createJobDto.url !== '') {
+      createJobDto.description = await getDescriptionFromUrl(createJobDto.url);
+    } else {
+      createJobDto.url = null;
+    }
+    const createdJob = new this.jobModel({
+      ...createJobDto,
+      state: 'started',
+    });
     return createdJob.save();
   }
 

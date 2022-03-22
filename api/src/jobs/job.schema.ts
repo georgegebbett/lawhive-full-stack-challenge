@@ -12,6 +12,9 @@ export class Job {
   description: string;
 
   @Prop()
+  url: string;
+
+  @Prop()
   state: 'started' | 'paid';
 
   @Prop()

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -30,7 +30,30 @@ export class JobsService {
     return `This action removes a #${id} job`;
   }
 
-  markPaid(id: string, paymentAmount: number) {
-    return this.jobModel.findByIdAndUpdate(id, { state: 'paid', paymentAmount: paymentAmount });
+  async markPaid(id: string, settlementAmount: number) {
+    const docToModify = await this.jobModel.findById(id);
+
+    if (docToModify.state !== 'started')
+      throw new HttpException(
+        'Job already in paid state',
+        HttpStatus.BAD_REQUEST,
+      );
+
+    if (docToModify.feeStructure === 'No-Win-No-Fee') {
+      docToModify.settlementAmount = settlementAmount;
+      docToModify.paymentAmount = this.calculateFeeFromSettlement(
+        docToModify.feeAmount,
+        settlementAmount,
+      );
+    } else {
+      docToModify.paymentAmount = docToModify.feeAmount;
+    }
+
+    docToModify.state = 'paid';
+    return docToModify.save();
+  }
+
+  calculateFeeFromSettlement(feeAmount: number, settlementAmount: number) {
+    return settlementAmount * (feeAmount / 100);
   }
 }

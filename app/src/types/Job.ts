@@ -5,5 +5,6 @@ export type Job = {
   feeStructure: 'No-Win-No-Fee' | 'Fixed-Fee',
   feeAmount: number,
   paymentAmount: number,
+  settlementAmount: number,
   _id: string
 }

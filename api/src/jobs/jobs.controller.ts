@@ -43,8 +43,8 @@ export class JobsController {
   @Post(':id/pay')
   markPaid(
     @Param('id') id: string,
-    @Body('paymentAmount') paymentAmount: number,
+    @Body('settlementAmount') settlementAmount: number,
   ) {
-    return this.jobsService.markPaid(id, paymentAmount);
+    return this.jobsService.markPaid(id, settlementAmount);
   }
 }

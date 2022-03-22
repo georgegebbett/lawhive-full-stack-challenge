@@ -7,6 +7,14 @@ interface Props {
   refreshTable: () => void
 }
 
+const statusMapping = {
+  started: "Started",
+  paid: "Paid"
+};
+
+const currencyFormatter = new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP'});
+const percentageFormatter = new Intl.NumberFormat('en-GB', {style: 'percent', maximumFractionDigits: 5});
+
 const markJobPaid = (job: Job, refreshTable: () => void) => {
 
   const getSettlementAmount = () => {
@@ -16,14 +24,11 @@ const markJobPaid = (job: Job, refreshTable: () => void) => {
     }
   }
 
-  let paymentAmount;
+  let settlementAmount;
   if (job.feeStructure === "No-Win-No-Fee") {
-    const settlementAmount = getSettlementAmount();
-    paymentAmount = (job.feeAmount / 100) * parseFloat(settlementAmount);
-  } else {
-    paymentAmount = job.feeAmount;
+    settlementAmount = getSettlementAmount();
   }
-  axios.post(`http://localhost:4000/jobs/${job._id}/pay`, {paymentAmount: paymentAmount})
+  axios.post(`http://localhost:4000/jobs/${job._id}/pay`, {settlementAmount: settlementAmount})
     .then(() => refreshTable());
 }
 
@@ -46,20 +51,19 @@ function JobTable({jobs, refreshTable}: Props) {
             <TableCell>{job.title}</TableCell>
             <TableCell>{job.description}</TableCell>
             <TableCell>{job.feeStructure}</TableCell>
-            <TableCell>{`${job.feeStructure === "Fixed-Fee" ? "£" : ""}${job.feeAmount}${job.feeStructure === "No-Win-No-Fee" ? "%" : ""}`}</TableCell>
+            <TableCell>{job.feeStructure === "Fixed-Fee" ? currencyFormatter.format(job.feeAmount) : percentageFormatter.format(job.feeAmount/100)}</TableCell>
             <TableCell>
-              <Chip color={job.state === "paid" ? "success" : "default"} label={job.state}/>
+              <Chip color={job.state === "paid" ? "success" : "default"} label={statusMapping[job.state]}/>
             </TableCell>
             <TableCell>
               {
                 job.state === 'started' ?
                 (<Button
                   variant="contained"
-                  disabled={job.state !== 'started'}
                   onClick={() => markJobPaid(job, refreshTable)}
                 >Pay</Button>)
                   :
-                (`£${job.paymentAmount}`)
+                (currencyFormatter.format(job.paymentAmount))
               }
             </TableCell>
           </TableRow>

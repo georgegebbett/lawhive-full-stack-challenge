@@ -6,5 +6,6 @@ export type Job = {
   feeAmount: number,
   paymentAmount: number,
   settlementAmount: number,
+  expectedSettlement: number,
   _id: string
 }

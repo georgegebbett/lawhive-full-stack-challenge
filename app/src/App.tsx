@@ -29,6 +29,7 @@ function App() {
 
   const [feeStructure, setFeeStructure] = useState('');
   const [feeAmount, setFeeAmount] = useState('');
+  const [expectedSettlement, setExpectedSettlement] = useState('');
 
   const [jobs, setJobs] = useState([]);
 
@@ -49,14 +50,16 @@ function App() {
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (jobTitle === '' || jobDescription === '') return;
+    if (feeStructure === "Fixed-Fee") setExpectedSettlement('');
     console.log(`Creating job - ${jobTitle} - ${jobDescription}`);
-    const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription, feeStructure: feeStructure, feeAmount: feeAmount});
+    const {data} = await axios.post("http://localhost:4000/jobs", {title: jobTitle, description: jobDescription, feeStructure: feeStructure, feeAmount: feeAmount, expectedSettlement: expectedSettlement});
     console.log(data);
     setChanged(!changed);
     setJobTitle("");
     setJobDescription("");
     setFeeAmount("");
     setFeeStructure("");
+    setExpectedSettlement('');
   }
   return (
     <ThemeProvider theme={theme}>
@@ -121,6 +124,17 @@ function App() {
                   value={feeAmount}
                   onChange={event => setFeeAmount(event.target.value)}
                   />
+                {feeStructure === 'No-Win-No-Fee' ? <TextField
+                  margin='normal'
+                  required
+                  fullWidth
+                  id='expected-settlement'
+                  label='Expected Settlement'
+                  InputProps={{startAdornment: <InputAdornment position='start'>£</InputAdornment>}}
+                  name='expected-settlement'
+                  value={expectedSettlement}
+                  onChange={event => setExpectedSettlement(event.target.value)}
+                /> : null}
                 <LoadingButton
                   type="submit"
                   fullWidth

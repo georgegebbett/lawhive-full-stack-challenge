@@ -1,6 +1,18 @@
 import {Job} from '../types/Job';
-import {Button, Chip, Table, TableBody, TableCell, TableHead, TableRow} from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Button,
+  Chip,
+  Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow
+} from "@mui/material";
 import axios from "axios";
+import {useState} from "react";
 
 interface Props {
   jobs: Job[],
@@ -15,25 +27,52 @@ const statusMapping = {
 const currencyFormatter = new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP'});
 const percentageFormatter = new Intl.NumberFormat('en-GB', {style: 'percent', maximumFractionDigits: 5});
 
-const markJobPaid = (job: Job, refreshTable: () => void) => {
 
-  const getSettlementAmount = () => {
-    while (true){
-      const settlementAmount = prompt("Enter Settlement amount");
-      if (settlementAmount !== null && parseFloat(settlementAmount)) return settlementAmount;
-    }
-  }
-
-  let settlementAmount;
-  if (job.feeStructure === "No-Win-No-Fee") {
-    settlementAmount = getSettlementAmount();
-  }
-  axios.post(`http://localhost:4000/jobs/${job._id}/pay`, {settlementAmount: settlementAmount})
-    .then(() => refreshTable());
-}
 
 function JobTable({jobs, refreshTable}: Props) {
+
+  const [paymentErrorOpen, setPaymentErrorOpen] = useState(false);
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
+
+  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+
+  const displayPaymentError = (errorMessage: string) => {
+    setPaymentErrorMessage(errorMessage);
+    setPaymentErrorOpen(true);
+    setTimeout(() => setPaymentErrorOpen(false), 5000);
+  }
+
+  const displayPaymentSuccess = () => {
+    setPaymentSuccessOpen(true);
+    setTimeout(() => setPaymentSuccessOpen(false), 5000);
+  }
+
+  const markJobPaid = (job: Job, refreshTable: () => void) => {
+
+    const getSettlementAmount = () => {
+      while (true){
+        const settlementAmount = prompt("Enter Settlement amount");
+        if (settlementAmount !== null && parseFloat(settlementAmount)) return settlementAmount;
+      }
+    }
+
+    let settlementAmount;
+    if (job.feeStructure === "No-Win-No-Fee") {
+      settlementAmount = getSettlementAmount();
+    }
+    axios.post(`http://localhost:4000/jobs/${job._id}/pay`, {settlementAmount: settlementAmount})
+      .then(() => {
+        displayPaymentSuccess();
+        refreshTable();
+      })
+      .catch((error) => {
+        console.log(error.response);
+        displayPaymentError(error.response.data.message);
+      });
+  }
+
   return (
+    <div>
     <Table>
       <TableHead>
         <TableRow>
@@ -69,7 +108,23 @@ function JobTable({jobs, refreshTable}: Props) {
           </TableRow>
         ))}
       </TableBody>
+
     </Table>
+      <Snackbar open={paymentErrorOpen} anchorOrigin={{horizontal: "right", vertical: 'bottom'}}>
+        <Alert severity="error" variant='filled'>
+          <AlertTitle>Payment Failed</AlertTitle>
+          {paymentErrorMessage}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar open={paymentSuccessOpen} anchorOrigin={{horizontal: "right", vertical: 'bottom'}}>
+        <Alert severity="success" variant='filled'>
+          <AlertTitle>Payment Succeeded</AlertTitle>
+          The payment has been stored
+        </Alert>
+      </Snackbar>
+
+    </div>
   )
 }
 

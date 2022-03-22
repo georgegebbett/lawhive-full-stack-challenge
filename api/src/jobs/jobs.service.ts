@@ -40,6 +40,16 @@ export class JobsService {
       );
 
     if (docToModify.feeStructure === 'No-Win-No-Fee') {
+      if (
+        !this.isSettlementWithinBounds(
+          docToModify.expectedSettlement,
+          settlementAmount,
+        )
+      )
+        throw new HttpException(
+          'Settlement amount not within expected bounds',
+          HttpStatus.BAD_REQUEST,
+        );
       docToModify.settlementAmount = settlementAmount;
       docToModify.paymentAmount = this.calculateFeeFromSettlement(
         docToModify.feeAmount,
@@ -55,5 +65,15 @@ export class JobsService {
 
   calculateFeeFromSettlement(feeAmount: number, settlementAmount: number) {
     return settlementAmount * (feeAmount / 100);
+  }
+
+  isSettlementWithinBounds(
+    expectedSettlement: number,
+    settlementAmount: number,
+  ) {
+    return (
+      settlementAmount >= 0.9 * expectedSettlement &&
+      settlementAmount <= 1.1 * expectedSettlement
+    );
   }
 }

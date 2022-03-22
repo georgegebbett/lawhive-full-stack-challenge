@@ -25,6 +25,9 @@ export class Job {
 
   @Prop()
   settlementAmount: number;
+
+  @Prop()
+  expectedSettlement: number;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
